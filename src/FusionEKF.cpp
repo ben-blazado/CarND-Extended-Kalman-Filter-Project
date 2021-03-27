@@ -36,6 +36,8 @@ FusionEKF::FusionEKF() {
    * TODO: Finish initializing the FusionEKF.
    * TODO: Set the process and measurement noises
    */
+  H_laser_ << 1, 0, 0, 0,
+              0, 1, 0, 0;
 }
 
 /**
@@ -91,12 +93,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0, 0, 1, 0,
             0, 0, 0, 1;
            
-    MatrixXd H_in = MatrixXd(2, 4);
-    H_in << 1, 0, 0, 0,
-            0, 1, 0, 0;
-   
+    MatrixXd H_in = H_laser_;
     MatrixXd R_in = R_laser_;
-   
     MatrixXd Q_in = MatrixXd::Zero(4, 4);
    
     ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
@@ -112,8 +110,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     return;
   }
   
-  cout << "Initialized Redo to predict " << endl;
-
   /**
    * Prediction
    */
@@ -124,6 +120,26 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * TODO: Update the process noise covariance matrix.
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
+  const float noise_ax = 9;
+  const float noise_ay = 9;
+    
+  float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
+  previous_timestamp_ = measurement_pack.timestamp_;
+  
+  ekf_.F_ << 1, 0, dt, 0,
+             0, 1, 0, dt,
+             0, 0, 1, 0,
+             0, 0, 0, 1;
+             
+  float dt4, dt3, dt2;
+            
+  dt4 = (dt*dt*dt*dt)/4;
+  dt3 = (dt*dt*dt)/2;
+  dt2 = dt*dt;
+  ekf_.Q_ << dt4*noise_ax,            0, dt3*noise_ax,            0,
+                        0, dt4*noise_ay,            0, dt3*noise_ay,
+             dt3*noise_ax,            0, dt2*noise_ax,            0, 
+                        0, dt3*noise_ay,            0, dt2*noise_ay;
 
   ekf_.Predict();
 
@@ -139,10 +155,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
-
+    ekf_.R_ = R_radar_;
+    ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
+    ekf_.Update(measurement_pack.raw_measurements_);
   } else {
     // TODO: Laser updates
-
+    ekf_.R_ = R_laser_;
+    ekf_.H_ = H_laser_;
+    ekf_.Update(measurement_pack.raw_measurements_);
   }
 
   // print the output
