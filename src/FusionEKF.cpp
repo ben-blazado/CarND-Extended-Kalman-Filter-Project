@@ -36,8 +36,6 @@ FusionEKF::FusionEKF() {
    * TODO: Finish initializing the FusionEKF.
    * TODO: Set the process and measurement noises
    */
-
-
 }
 
 /**
@@ -55,26 +53,66 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      * TODO: Create the covariance matrix.
      * You'll need to convert radar from polar to cartesian coordinates.
      */
-
+     
+    VectorXd x_in = VectorXd(4);
+    
     // first measurement
     cout << "EKF: " << endl;
-    ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
+    // ekf_.x_ = VectorXd(4);
+    // ekf_.x_ << 1, 1, 1, 1;
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
       //         and initialize state.
-
+      cout << "Radar.rho   " << measurement_pack.raw_measurements_(0) << endl;
+      cout << "Radar.phi   " << measurement_pack.raw_measurements_(1) << endl;
+      cout << "Radar.phi_d " << measurement_pack.raw_measurements_(2) << endl;
+      cout << endl;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       // TODO: Initialize state.
-
+      
+      x_in << measurement_pack.raw_measurements_(0),
+              measurement_pack.raw_measurements_(1),
+              0,
+              0;
+      
     }
-
+   
+    MatrixXd P_in = MatrixXd(4, 4);
+    P_in << 1,    0,    0,    0,
+            0,    1,    0,    0,
+            0,    0, 1000,    0,
+            0,    0,    0, 1000;
+           
+    MatrixXd F_in = MatrixXd(4, 4);
+    F_in << 1, 0, 1, 0,
+            0, 1, 0, 1,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+           
+    MatrixXd H_in = MatrixXd(2, 4);
+    H_in << 1, 0, 0, 0,
+            0, 1, 0, 0;
+   
+    MatrixXd R_in = R_laser_;
+   
+    MatrixXd Q_in = MatrixXd::Zero(4, 4);
+   
+    ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
+    
+    previous_timestamp_ = measurement_pack.timestamp_;
+    
+    cout << "Lidar.x " << ekf_.x_(0) << endl;
+    cout << "Lidar.y " << ekf_.x_(1) << endl;
+    cout << "t_stamp " << previous_timestamp_ << endl;
+    
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
   }
+  
+  cout << "Initialized Redo to predict " << endl;
 
   /**
    * Prediction
