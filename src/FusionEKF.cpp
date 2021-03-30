@@ -133,6 +133,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
              
   float dt4, dt3, dt2;
             
+  //dt4 = (dt*dt*dt*dt)/4;
   dt4 = (dt*dt*dt*dt)/4;
   dt3 = (dt*dt*dt)/2;
   dt2 = dt*dt;
@@ -157,7 +158,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Radar updates
     ekf_.R_ = R_radar_;
     ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
-    ekf_.Update(measurement_pack.raw_measurements_);
+    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // TODO: Laser updates
     ekf_.R_ = R_laser_;

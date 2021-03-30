@@ -52,6 +52,12 @@ void KalmanFilter::Update(const VectorXd &z) {
   cout << "dims H_:"; dims(H_);
   cout << "dims x_:"; dims(x_);  
   VectorXd y = z - H_*x_;
+  
+  if (y.size() == 3) {
+      cout << "z_pred " << endl;
+    cout << y << endl;
+  }
+  
   cout << "dims y:"; dims(y);
 
   cout << "dims H_:"; dims(H_);
@@ -75,31 +81,49 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
    * TODO: update the state by using Extended Kalman Filter equations
    */
   cout << "KalmanFilter::UpdateEKF()" << endl;
+  MatrixXd Ht = H_.transpose();  
   
-  VectorXd y = z - H_*x_;
-     
-  float rho   = z(0);
-  float phi   = - z(1);
-  float phi_d = z(2);
+  float px = x_(0);
+  float py = x_(1);
+  float vx = x_(2);
+  float vy = x_(3);
+  
+  float rho   = sqrt(px*px + py*py);
+  cout << "px " << px << endl;
+  cout << "py " << py << endl;
+  float phi   = atan2(py,px);
+  float phi_d = (px*vx + py*vy) / rho;
   
   cout << "rho " << rho << endl;
-  cout << "phi " << phi << endl;
-  cout << "phi " << phi_d << endl;
+  cout << "phi_deg " << phi * (180/M_PI) << endl;
+  cout << "phi_d " << phi_d << endl;
+  //assert (py >= 0);
 
-  float px = rho * cos(phi);
-  float py = -(rho * sin(phi));
+  VectorXd pred_z = VectorXd(3);
+  pred_z << rho, phi, phi_d;
   
-  VectorXd p = VectorXd(2);
-  p << px, py;
-  VectorXd p_inverse = p.array() / pow(rho, 2);
+  VectorXd y = z - pred_z;
+  while (y(1) > M_PI)  y(1) -= 2*M_PI;
+  while (y(1) < -M_PI) y(1) += 2*M_PI;
   
-  //https://www.euclideanspace.com/maths/algebra/vectors/vecAlgebra/inverse/index.htm
-  VectorXd v = phi_d*rho*p_inverse.array();
+  /*
+  cout << "dims y:"; dims(y);
+
+  cout << "dims H_:"; dims(H_);
+  cout << "dims P_:"; dims(P_);
+  cout << "dims Ht:"; dims(Ht);  
+  cout << "dims R_:"; dims(R_);
+  */
+   
+  MatrixXd S = H_*P_*Ht + R_;
   
-  //VectorXd z = VectorXd(4);
-  //z << p(0), p(1), v(0), v(1);
+  // cout << "dims S:"; dims(S);
   
-  //Update(z);
+  MatrixXd K = P_*Ht*S.inverse();
+  
+  MatrixXd I = MatrixXd::Identity(x_.size(), x_.size());
+  x_ = x_ + K*y;
+  P_ = (I - K*H_)*P_;
 }
 
 
