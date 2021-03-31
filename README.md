@@ -34,3 +34,14 @@ To compile the source code, run the following from the main project directory:
 * `cd build`
 * `cmake ..`
 * `make`
+
+## Evaluation
+![](./evaluation.png)
+
+## Code Comments
+
+### kalman_filter.cpp
+![](./code_comm_1.png)
+
+### FusionEKF.cpp
+![](./code_comm_2.png)
