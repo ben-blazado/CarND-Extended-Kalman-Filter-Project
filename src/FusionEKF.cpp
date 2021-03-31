@@ -45,8 +45,8 @@ FusionEKF::FusionEKF() {
   MatrixXd P_in = MatrixXd(4, 4);
   P_in << 1,    0,    0,    0,
           0,    1,    0,    0,
-          0,    0, 1000,    0,
-          0,    0,    0, 1000;
+          0,    0, 1000,    0,    // initial high uncertaintany values
+          0,    0,    0, 1000;    // for velocity components
          
   MatrixXd F_in = MatrixXd(4, 4);
   F_in << 1, 0, 1, 0,
@@ -78,6 +78,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      */
     
     // first measurement
+    
+    /*
+     * covariance matrix P is initialized in FusionEKF constructor
+     * this only initializes the state, ekf_.x_, with raw_measurements_.
+     */
     
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 

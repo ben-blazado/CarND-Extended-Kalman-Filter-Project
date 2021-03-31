@@ -45,9 +45,10 @@ void KalmanFilter::Update(const VectorXd &z) {
   /**
    * TODO: update the state by using Kalman Filter equations
    */
-  MatrixXd Ht = H_.transpose();
-
+  
   VectorXd y = z - H_*x_;
+  
+  MatrixXd Ht = H_.transpose();
    
   MatrixXd S = H_*P_*Ht + R_;
   
@@ -57,12 +58,12 @@ void KalmanFilter::Update(const VectorXd &z) {
   P_ = P_ - K*H_*P_;
 }
 
+const float TWO_PI = 2*M_PI;  // 360-degrees; used to normalize phi error
+
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
    * TODO: update the state by using Extended Kalman Filter equations
    */
-  cout << "KalmanFilter::UpdateEKF()" << endl;
-
   // unpack predicted pos and vel from x_ 
   float px = x_(0);
   float py = x_(1);
@@ -81,14 +82,13 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   // measure error, y
   VectorXd y = z - pred_z;
   // normalize phi error, y(1), between -PI and PI
-  while (y(1) > M_PI)  y(1) -= 2*M_PI;
-  while (y(1) < -M_PI) y(1) += 2*M_PI;
-   
-  // H is jacobian, Hj, set in FusionEKF
+  while (y(1) > M_PI)  y(1) -= TWO_PI;
+  while (y(1) < -M_PI) y(1) += TWO_PI;
+  
+  // jacobian matrix, Hj, is assigned to H_ in FusionEKF
+  // radar meausrement noise, R_Radar, is assigned to R_ in FusionEKF  
   MatrixXd Ht = H_.transpose();  
-  
   MatrixXd S = H_*P_*Ht + R_;
-  
   MatrixXd K = P_*Ht*S.inverse();
    
   x_ = x_ + K*y;
