@@ -1,7 +1,7 @@
 # Extended Kalman Filter
 This is a Udacity Self-Driving Car NanoDegree project submission that uses a kalman filter to estimate the state of a moving object of interest with noisy simulated lidar and radar measurements. 
 
-![](Screenshot.png)
+![](./screenshot.png)
 
 ## Installation
 * Clone or fork this repository. 
